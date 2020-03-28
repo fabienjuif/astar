@@ -1,0 +1,67 @@
+{
+  "name": "@fabienjuif/astar",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "homepage": "https://github.com/fabienjuif/astar",
+  "repository": "github:fabienjuif/astar",
+  "bugs": "https://github.com/fabienjuif/astar/issues",
+  "author": "Fabien JUIF <fabien.juif@gmail.com>",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint --cache \"**/*.js\"",
+    "format": "prettier \"**/*.{ts,tsx,js,jsx,md,json}\" --write",
+    "ci:check": "prettier \"**/*.{ts,tsx,js,jsx,md,json}\" --check",
+    "ci": "run-p lint test ci:*"
+  },
+  "dependencies": {},
+  "keywords": [
+    "astar",
+    "a*",
+    "A",
+    "algogithm",
+    "video-game",
+    "game",
+    "shortest-path",
+    "shortest",
+    "path"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "husky": ">=4",
+    "jest": "^25.2.3",
+    "lint-staged": ">=10",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.0.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  },
+  "eslintConfig": {
+    "extends": [
+      "airbnb-base",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "semi": "off",
+      "no-plusplus": "off",
+      "no-continue": "off"
+    }
+  }
+}
