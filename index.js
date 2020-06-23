@@ -1,51 +1,79 @@
 // https://fr.wikipedia.org/wiki/Algorithme_A*
 // A* Search Algorithm
 
-// node: [x, y, cost, h, parentNode]
+// node {
+//   x,
+//   y,
+//   cost,
+//   h,
+//   parentNode,
+// }
 
-function identity(o) {
-  return o
-}
 function sortNodes(node1, node2) {
-  if (node1[3] > node2[3]) return 1
-  if (node1[3] < node2[3]) return -1
+  if (node1.h > node2.h) return 1
+  if (node1.h < node2.h) return -1
   return 0
 }
-function getFinalPath(end) {
-  if (!end[4]) return [end.slice(0, 3)]
-  return [...getFinalPath(end[4]), end.slice(0, 3)]
-}
-function defaultSameNode(node1, node2) {
-  return node1[0] === node2[0] && node1[1] === node2[1]
+
+function getFinalPath(graph, end) {
+  const node = graph.get(end.x).get(end.y)
+  const mappedNode = {
+    x: node.x,
+    y: node.y,
+    cost: node.cost,
+  }
+
+  if (!node.parentNode) return [mappedNode]
+
+  return [...getFinalPath(graph, node.parentNode), mappedNode]
 }
 
-function defaultGetNeighbours(graph, node, { mapNode = identity } = {}) {
+function defaultSameNode(node1, node2) {
+  return node1.x === node2.x && node1.y === node2.y
+}
+
+function defaultGetNeighbours(graph, node) {
   const neighbours = []
 
+  function getAndAdd(x, y) {
+    if (!graph.has(x)) return
+
+    const graphNode = graph.get(x).get(y)
+    if (!graphNode) return
+
+    neighbours.push(graphNode)
+  }
+
   // left
-  let next = graph[node[0] - 1] && graph[node[0] - 1][node[1]]
-  if (next) neighbours.push(mapNode(next))
-
+  getAndAdd(node.x - 1, node.y)
   // right
-  next = graph[node[0] + 1] && graph[node[0] + 1][node[1]]
-  if (next) neighbours.push(mapNode(next))
-
+  getAndAdd(node.x + 1, node.y)
   // top
-  next = graph[node[0]][node[1] - 1]
-  if (next) neighbours.push(mapNode(next))
-
+  getAndAdd(node.x, node.y - 1)
   // bottom
-  next = graph[node[0]][node[1] + 1]
-  if (next) neighbours.push(mapNode(next))
+  getAndAdd(node.x, node.y + 1)
 
   return neighbours
 }
 
 function defaultDistance(node, end) {
-  const x = end[0] - node[0]
-  const y = end[1] - node[1]
+  const x = end.x - node.x
+  const y = end.y - node.y
 
   return x * x + y * y
+}
+
+function defaultMapGraph(graph) {
+  const rows = new Map()
+
+  graph.forEach((cell) => {
+    const row = rows.get(cell.x) || new Map()
+    if (!rows.has(cell.x)) rows.set(cell.x, row)
+
+    row.set(cell.y, { ...cell })
+  })
+
+  return rows
 }
 
 module.exports = function getClosestPath(
@@ -54,51 +82,71 @@ module.exports = function getClosestPath(
   end,
   {
     sameNode = defaultSameNode,
-    mapGraph = identity,
-    mapNode = identity,
+    mapGraph = defaultMapGraph,
     getNeighbours = defaultGetNeighbours,
     distance = defaultDistance,
     heuristic = () => 1,
     maxLoops = Infinity,
   } = {},
 ) {
-  const mappedGraph = mapGraph(
-    [...graph].map((row) => [...row].map((cell) => [...cell])),
-  )
+  const mappedGraph = mapGraph(graph)
+
   const closedList = []
   const openList = []
 
-  openList.push(mapNode(start).concat(0))
+  function getNode({ x, y }) {
+    return mappedGraph.get(x).get(y)
+  }
+
+  function updateNode(node) {
+    mappedGraph.get(node.x).set(node.y, node)
+    return node
+  }
+  openList.push(updateNode({ ...start, cost: 0 }))
 
   let loop = -1
   while (openList.length > 0 && loop++ < maxLoops) {
-    const current = openList.shift()
+    const current = getNode(openList.shift())
 
-    if (current[2] === Infinity) {
-      return [-2, [], loop]
+    if (current.cost === Infinity) {
+      return {
+        status: 'not_found',
+        path: [],
+        loops: loop,
+      }
     }
 
     if (sameNode(current, end)) {
-      return [0, getFinalPath(current), loop]
+      return {
+        status: 'success',
+        path: getFinalPath(mappedGraph, current),
+        loops: loop,
+      }
     }
 
-    const neighbours = getNeighbours(mappedGraph, current, { mapNode })
+    const neighbours = getNeighbours(mappedGraph, current)
     for (let i = 0; i < neighbours.length; i += 1) {
-      const neighbour = neighbours[i]
-      const known = neighbour[2] !== undefined
+      const neighbour = getNode(neighbours[i])
+      const known = neighbour.cost !== undefined
 
       if (closedList.find((n) => sameNode(n, neighbour))) continue
 
       const newCost =
-        (current[2] || 0) +
-        heuristic(current.slice(0, 2), neighbour.slice(0, 2))
+        (current.cost || 0) + heuristic({ ...current }, { ...neighbour })
 
-      if (known && neighbour[2] < newCost) continue
+      if (known && neighbour.cost < newCost) continue
 
-      neighbour[2] = newCost
-      neighbour[3] = neighbour[2] + distance(neighbour, end)
-      neighbour[4] = current
-      if (!known) openList.push(neighbour)
+      const newNeighbour = updateNode({
+        ...neighbour,
+        cost: newCost,
+        h: newCost + distance(neighbour, end),
+        parentNode: {
+          x: current.x,
+          y: current.y,
+        },
+      })
+
+      if (!known) openList.push(newNeighbour)
       openList.sort(sortNodes)
     }
 
@@ -106,8 +154,12 @@ module.exports = function getClosestPath(
   }
 
   if (loop >= maxLoops) {
-    return [1, getFinalPath(openList[0]), loop]
+    return {
+      status: 'not_optimized',
+      path: getFinalPath(mappedGraph, openList[0]),
+      loops: loop,
+    }
   }
 
-  return [-1, [], loop]
+  return { status: 'not_found', path: [], loops: loop }
 }
