@@ -2,83 +2,72 @@
 const getClosestPath = require('./index')
 
 const graph = [
-  [
-    [0, 0],
-    [0, 1],
-    [0, 2],
-    [0, 3],
-    [0, 4],
-    [0, 5],
-  ],
-  [
-    [1, 0],
-    [1, 1],
-    [1, 2],
-  ],
-  [
-    [2, 0],
-    [2, 1],
-    [2, 2],
-    [2, 3],
-    [2, 4],
-    [2, 5],
-  ],
+  { x: 0, y: 0 },
+  { x: 0, y: 1 },
+  { x: 0, y: 2 },
+  { x: 0, y: 3 },
+  { x: 0, y: 4 },
+  { x: 0, y: 5 },
+  { x: 1, y: 0 },
+  { x: 1, y: 1 },
+  { x: 1, y: 2 },
+  { x: 2, y: 0 },
+  { x: 2, y: 1 },
+  { x: 2, y: 2 },
+  { x: 2, y: 3 },
+  { x: 2, y: 4 },
+  { x: 2, y: 5 },
 ]
 
 it('should find the closest path with all default', () => {
-  expect(getClosestPath(graph, [0, 0], [2, 3])).toEqual([
-    // route found
-    0,
-    // path
-    [
-      [0, 0, 0],
-      [0, 1, 1],
-      [1, 1, 2],
-      [1, 2, 3],
-      [2, 2, 4],
-      [2, 3, 5],
+  expect(getClosestPath(graph, { x: 0, y: 0 }, { x: 2, y: 3 })).toEqual({
+    status: 'success',
+    path: [
+      { x: 0, y: 0, cost: 0 },
+      { x: 0, y: 1, cost: 1 },
+      { x: 1, y: 1, cost: 2 },
+      { x: 1, y: 2, cost: 3 },
+      { x: 2, y: 2, cost: 4 },
+      { x: 2, y: 3, cost: 5 },
     ],
-    // loops
-    5,
-  ])
+    loops: 5,
+  })
 })
 
 it('should get the best path with the max loops exceed', () => {
-  expect(getClosestPath(graph, [0, 0], [2, 3], { maxLoops: 2 })).toEqual([
-    // hit max loops
-    1,
-    // path
-    [
-      [0, 0, 0],
-      [0, 1, 1],
-      [1, 1, 2],
-      [1, 2, 3],
+  expect(
+    getClosestPath(graph, { x: 0, y: 0 }, { x: 2, y: 3 }, { maxLoops: 2 }),
+  ).toEqual({
+    status: 'not_optimized',
+    path: [
+      { x: 0, y: 0, cost: 0 },
+      { x: 0, y: 1, cost: 1 },
+      { x: 1, y: 1, cost: 2 },
+      { x: 1, y: 2, cost: 3 },
     ],
-    // loops
-    3,
-  ])
+    loops: 3,
+  })
 })
 
 it('should not find a path', () => {
-  expect(getClosestPath(graph, [0, 0], [3, 3])).toEqual([
-    // path not found
-    -1,
-    // path
-    [],
-    // loops
-    14,
-  ])
+  expect(getClosestPath(graph, { x: 0, y: 0 }, { x: 3, y: 3 })).toEqual({
+    status: 'not_found',
+    path: [],
+    loops: 14,
+  })
 })
 
 it('should not find a path because all nodes are walls', () => {
   expect(
-    getClosestPath(graph, [0, 0], [2, 3], { heuristic: () => Infinity }),
-  ).toEqual([
-    // path not found (blocked)
-    -2,
-    // path
-    [],
-    // loops
-    1,
-  ])
+    getClosestPath(
+      graph,
+      { x: 0, y: 0 },
+      { x: 2, y: 3 },
+      { heuristic: () => Infinity },
+    ),
+  ).toEqual({
+    status: 'not_found',
+    path: [],
+    loops: 1,
+  })
 })
