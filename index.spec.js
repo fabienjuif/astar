@@ -71,3 +71,41 @@ it('should not find a path because all nodes are walls', () => {
     loops: 1,
   })
 })
+
+it('should find path in negative coordinates graph', () => {
+  expect(
+    getClosestPath(
+      [
+        { x: 1, y: 0 },
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: -2, y: 0 },
+        { x: -2, y: -1 },
+        { x: -2, y: 1 },
+        { x: 1, y: -2 },
+        { x: 1, y: -1 },
+        { x: -2, y: 2 },
+        { x: -1, y: 2 },
+      ],
+      { x: 1, y: -1 },
+      { x: -1, y: 2 },
+    ),
+  ).toEqual({
+    status: 'success',
+    path: [
+      {
+        x: 1,
+        y: -1,
+        cost: 0,
+      },
+      { x: 1, y: 0, cost: 1 },
+      { x: 0, y: 0, cost: 2 },
+      { x: -1, y: 0, cost: 3 },
+      { x: -2, y: 0, cost: 4 },
+      { x: -2, y: 1, cost: 5 },
+      { x: -2, y: 2, cost: 6 },
+      { x: -1, y: 2, cost: 7 },
+    ],
+    loops: 7,
+  })
+})
